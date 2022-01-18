@@ -202,80 +202,82 @@ public class Game {
         int DestinationX = move.getEndPosition().ReturnCoordinate().getFile();
         int DestinationY = move.getEndPosition().ReturnCoordinate().getRank();
 
-        //Moves the piece back to where it started
-        board.getBoardArray()[OriginY - 1][OriginX - 1] =
-                new Square.OccupiedSquare(OriginX, OriginY, move.getMovedPiece());
-        move.getMovedPiece().setPieceCoordinate(move.getStartPosition().ReturnCoordinate());
+        if (move.getMovedPiece() != null){
+            //Moves the piece back to where it started
+            board.getBoardArray()[OriginY - 1][OriginX - 1] =
+                    new Square.OccupiedSquare(OriginX, OriginY, move.getMovedPiece());
+            move.getMovedPiece().setPieceCoordinate(move.getStartPosition().ReturnCoordinate());
 
-        //Puts any captured piece back to where it started and removes the other piece from that square
-        if (move instanceof Move.EnPassantMove) {
-            board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.EmptySquare(DestinationX, DestinationY);
-            board.getBoardArray()[((Move.EnPassantMove) move).getCapturedPieceLocation().ReturnCoordinate().getRank() - 1]
-                    [((Move.EnPassantMove) move).getCapturedPieceLocation().ReturnCoordinate().getFile() - 1] =
-                    new Square.OccupiedSquare(((Move.EnPassantMove) move).getCapturedPieceLocation().ReturnCoordinate().getRank(),
-                            ((Move.EnPassantMove) move).getCapturedPieceLocation().ReturnCoordinate().getFile(), move.getCapturedPiece());
+            //Puts any captured piece back to where it started and removes the other piece from that square
+            if (move instanceof Move.EnPassantMove) {
+                board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.EmptySquare(DestinationX, DestinationY);
+                board.getBoardArray()[((Move.EnPassantMove) move).getCapturedPieceLocation().ReturnCoordinate().getRank() - 1]
+                        [((Move.EnPassantMove) move).getCapturedPieceLocation().ReturnCoordinate().getFile() - 1] =
+                        new Square.OccupiedSquare(((Move.EnPassantMove) move).getCapturedPieceLocation().ReturnCoordinate().getRank(),
+                                ((Move.EnPassantMove) move).getCapturedPieceLocation().ReturnCoordinate().getFile(), move.getCapturedPiece());
 
-            if (move.getCapturedPiece().getColour() == Colour.WHITE) {
-                board.getWhitePieces().add(move.getCapturedPiece());
-            } else if (move.getCapturedPiece().getColour() == Colour.BLACK) {
-                board.getBlackPieces().add(move.getCapturedPiece());
+                if (move.getCapturedPiece().getColour() == Colour.WHITE) {
+                    board.getWhitePieces().add(move.getCapturedPiece());
+                } else if (move.getCapturedPiece().getColour() == Colour.BLACK) {
+                    board.getBlackPieces().add(move.getCapturedPiece());
+                }
+                board.setEnPassantPawn((Pawn) move.getCapturedPiece());
+            } else if (move instanceof Move.CapturingMove) {
+                board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.OccupiedSquare(DestinationX, DestinationY, move.getCapturedPiece());
+                if (move.getCapturedPiece().getColour() == Colour.WHITE) {
+                    board.getWhitePieces().add(move.getCapturedPiece());
+                } else if (move.getCapturedPiece().getColour() == Colour.BLACK) {
+                    board.getBlackPieces().add(move.getCapturedPiece());
+                }
+            } else if (move instanceof Move.PawnPromotion) {
+                board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.EmptySquare(DestinationX, DestinationY);
+                if (((Move.PawnPromotion) move).getPromotionPiece().getColour() == Colour.WHITE) {
+                    board.getWhitePieces().remove(((Move.PawnPromotion) move).getPromotionPiece());
+                    board.getWhitePieces().add(move.getMovedPiece());
+
+                } else if (((Move.PawnPromotion) move).getPromotionPiece().getColour() == Colour.BLACK) {
+                    board.getBlackPieces().remove(((Move.PawnPromotion) move).getPromotionPiece());
+                    board.getBlackPieces().add(move.getMovedPiece());
+                }
+
+            } else if (move instanceof Move.PawnPromotionCapture) {
+                board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.OccupiedSquare(DestinationX, DestinationY, move.getCapturedPiece());
+                if (((Move.PawnPromotionCapture) move).getPromotionPiece().getColour() == Colour.WHITE) {
+                    board.getWhitePieces().remove(((Move.PawnPromotionCapture) move).getPromotionPiece());
+                    board.getWhitePieces().add(move.getMovedPiece());
+                    board.getWhitePieces().add(move.getCapturedPiece());
+
+                } else if (((Move.PawnPromotionCapture) move).getPromotionPiece().getColour() == Colour.BLACK) {
+                    board.getBlackPieces().remove(((Move.PawnPromotionCapture) move).getPromotionPiece());
+                    board.getBlackPieces().add(move.getMovedPiece());
+                    board.getBlackPieces().add(move.getCapturedPiece());
+                }
+
+            } else if (move instanceof Move.CastlingMove) {
+                board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.EmptySquare(DestinationX, DestinationY);
+                board.getBoardArray()[((Move.CastlingMove) move).getRookDestination().getRank() - 1][((Move.CastlingMove) move).getRookDestination().getFile() - 1]
+                        = new Square.EmptySquare(((Move.CastlingMove) move).getRookDestination().getFile(), ((Move.CastlingMove) move).getRookDestination().getRank());
+
+                int rank = move.getMovedPiece().getColour() == Colour.WHITE ? 0 : 7;
+                if (((Move.CastlingMove) move).getCastleType() == CastlingAvailability.KING_SIDE) {
+                    board.getBoardArray()[rank][7] = new Square.OccupiedSquare(8, rank + 1, ((Move.CastlingMove) move).getCastledRook());
+                    ((Move.CastlingMove) move).getCastledRook().setPieceCoordinate(new Coordinate(8, rank + 1));
+                } else if (((Move.CastlingMove) move).getCastleType() == CastlingAvailability.QUEEN_SIDE) {
+                    board.getBoardArray()[rank][0] = new Square.OccupiedSquare(1, rank + 1, ((Move.CastlingMove) move).getCastledRook());
+                    ((Move.CastlingMove) move).getCastledRook().setPieceCoordinate(new Coordinate(1, rank + 1));
+                }
+
+            } else {
+                board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.EmptySquare(DestinationX, DestinationY);
             }
-            board.setEnPassantPawn((Pawn) move.getCapturedPiece());
-        } else if (move instanceof Move.CapturingMove) {
-            board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.OccupiedSquare(DestinationX, DestinationY, move.getCapturedPiece());
-            if (move.getCapturedPiece().getColour() == Colour.WHITE) {
-                board.getWhitePieces().add(move.getCapturedPiece());
-            } else if (move.getCapturedPiece().getColour() == Colour.BLACK) {
-                board.getBlackPieces().add(move.getCapturedPiece());
-            }
-        } else if (move instanceof Move.PawnPromotion) {
-            board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.EmptySquare(DestinationX, DestinationY);
-            if (((Move.PawnPromotion) move).getPromotionPiece().getColour() == Colour.WHITE) {
-                board.getWhitePieces().remove(((Move.PawnPromotion) move).getPromotionPiece());
-                board.getWhitePieces().add(move.getMovedPiece());
 
-            } else if (((Move.PawnPromotion) move).getPromotionPiece().getColour() == Colour.BLACK) {
-                board.getBlackPieces().remove(((Move.PawnPromotion) move).getPromotionPiece());
-                board.getBlackPieces().add(move.getMovedPiece());
-            }
+            //Reset Castling Status
+            King king = (King) (move.getMovedPiece().getColour() == Colour.WHITE ? board.getKings()[0] : board.getKings()[1]);
+            king.setCastlingAvailability(castlingAvailability);
 
-        } else if (move instanceof Move.PawnPromotionCapture) {
-            board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.OccupiedSquare(DestinationX, DestinationY, move.getCapturedPiece());
-            if (((Move.PawnPromotionCapture) move).getPromotionPiece().getColour() == Colour.WHITE) {
-                board.getWhitePieces().remove(((Move.PawnPromotionCapture) move).getPromotionPiece());
-                board.getWhitePieces().add(move.getMovedPiece());
-                board.getWhitePieces().add(move.getCapturedPiece());
-
-            } else if (((Move.PawnPromotionCapture) move).getPromotionPiece().getColour() == Colour.BLACK) {
-                board.getBlackPieces().remove(((Move.PawnPromotionCapture) move).getPromotionPiece());
-                board.getBlackPieces().add(move.getMovedPiece());
-                board.getBlackPieces().add(move.getCapturedPiece());
-            }
-
-        } else if (move instanceof Move.CastlingMove) {
-            board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.EmptySquare(DestinationX, DestinationY);
-            board.getBoardArray()[((Move.CastlingMove) move).getRookDestination().getRank() - 1][((Move.CastlingMove) move).getRookDestination().getFile() - 1]
-                    = new Square.EmptySquare(((Move.CastlingMove) move).getRookDestination().getFile(), ((Move.CastlingMove) move).getRookDestination().getRank());
-
-            int rank = move.getMovedPiece().getColour() == Colour.WHITE ? 0 : 7;
-            if (((Move.CastlingMove) move).getCastleType() == CastlingAvailability.KING_SIDE) {
-                board.getBoardArray()[rank][7] = new Square.OccupiedSquare(8, rank + 1, ((Move.CastlingMove) move).getCastledRook());
-                ((Move.CastlingMove) move).getCastledRook().setPieceCoordinate(new Coordinate(8, rank + 1));
-            } else if (((Move.CastlingMove) move).getCastleType() == CastlingAvailability.QUEEN_SIDE) {
-                board.getBoardArray()[rank][0] = new Square.OccupiedSquare(1, rank + 1, ((Move.CastlingMove) move).getCastledRook());
-                ((Move.CastlingMove) move).getCastledRook().setPieceCoordinate(new Coordinate(1, rank + 1));
-            }
-
-        } else {
-            board.getBoardArray()[DestinationY - 1][DestinationX - 1] = new Square.EmptySquare(DestinationX, DestinationY);
+            //Reset EnPassant Pawn
+            board.setEnPassantPawn(enPassantPawn);
         }
-
-        //Reset Castling Status
-        King king = (King) (move.getMovedPiece().getColour() == Colour.WHITE ? board.getKings()[0] : board.getKings()[1]);
-        king.setCastlingAvailability(castlingAvailability);
-
-        //Reset EnPassant Pawn
-        board.setEnPassantPawn(enPassantPawn);
     }
 
     /**
@@ -402,14 +404,16 @@ public class Game {
             for (Piece piece : pieces) {
                 List<Move> moves = piece.CalculateValidMoves(board);
                 for (Move move : moves) {
-                    MakeMove(move, board);
+                    if (move.getMovedPiece() != null){
+                        MakeMove(move, board);
 
-                    //If you can make a move which removes the king from check then its not checkmate
-                    if (!isKingChecked(colour, board)) {
-                        reverseMove(move, board, castlingAvailability, enPassantPawn);
-                        return false;
-                    } else {
-                        reverseMove(move, board, castlingAvailability, enPassantPawn);
+                        //If you can make a move which removes the king from check then its not checkmate
+                        if (!isKingChecked(colour, board)) {
+                            reverseMove(move, board, castlingAvailability, enPassantPawn);
+                            return false;
+                        } else {
+                            reverseMove(move, board, castlingAvailability, enPassantPawn);
+                        }
                     }
                 }
             }

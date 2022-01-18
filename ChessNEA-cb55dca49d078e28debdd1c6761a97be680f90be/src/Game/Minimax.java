@@ -14,7 +14,8 @@ import java.util.Random;
 public final class Minimax {
 
     private final Game game;
-    private Move currentBestMove;
+    private static Move currentBestMove;
+    private int depth;
 
     private int temp = 0; // TODO remove
 
@@ -24,14 +25,19 @@ public final class Minimax {
 
     public double minimaxTraversal(Board currentPosition, int searchDepth, double alpha, double beta, boolean maximizer, Colour maximizingColour) {
         temp++;
+        if (temp == 0){
+            depth = searchDepth;
+        }
         //System.out.println("");
         if (searchDepth == 0 || game.isGameOver()) {
             return evaluateBranch(currentPosition, maximizingColour);
         }
         List<Move> moves = getChildren(currentPosition, maximizer, maximizingColour);
-        if (moves.get(0).getMovedPiece().getColour() == maximizingColour) {
-            Random r = new Random();
-            currentBestMove = moves.get(r.nextInt(moves.size()));
+        if (moves.get(0).getMovedPiece() != null){
+            if (moves.get(0).getMovedPiece().getColour() == maximizingColour) {
+                Random r = new Random();
+                currentBestMove = moves.get(r.nextInt(moves.size()));
+            }
         }
 
         //Get castling availability using XOR operator
@@ -44,62 +50,66 @@ public final class Minimax {
         if (maximizer) {
             double maxEvaluation = Double.NEGATIVE_INFINITY;
             for (Move currentNode : moves) {
-                Game.MakeMove(currentNode, currentPosition);
+                if (currentNode.getMovedPiece() != null){
+                    Game.MakeMove(currentNode, currentPosition);
 
-                System.out.println("Move Made");
-                game.getBoard().PrintBoard();
-                System.out.println("");
+//                    System.out.println("Move Made");
+//                    game.getBoard().PrintBoard();
+//                    System.out.println("");
 
-                //game.getBoard().PrintBoard(); //todo Remove
-                //if (currentNode.wasCapture()) System.out.println("Capture"); //todo remove
-                double nodeEvaluation = minimaxTraversal(currentPosition, searchDepth - 1, alpha, beta, false, maximizingColour);
-                //System.out.println("Node Evaluation: " + nodeEvaluation);
-                Game.reverseMove(currentNode, currentPosition, castlingAvailability, enPassantPawn);
+                    //game.getBoard().PrintBoard(); //todo Remove
+                    //if (currentNode.wasCapture()) System.out.println("Capture"); //todo remove
+                    double nodeEvaluation = minimaxTraversal(currentPosition, searchDepth - 1, alpha, beta, false, maximizingColour);
+                    //System.out.println("Node Evaluation: " + nodeEvaluation);
+                    Game.reverseMove(currentNode, currentPosition, castlingAvailability, enPassantPawn);
 
-                System.out.println("Move Reversed");
-                game.getBoard().PrintBoard();
-                System.out.println("");
+//                    System.out.println("Move Reversed");
+//                    game.getBoard().PrintBoard();
+//                    System.out.println("");
 
-                if (nodeEvaluation > maxEvaluation) {
-                    maxEvaluation = nodeEvaluation;
-                    if (currentNode.getMovedPiece().getColour() == maximizingColour) {
-                        currentBestMove = currentNode;
+                    if (nodeEvaluation > maxEvaluation) {
+                        maxEvaluation = nodeEvaluation;
+                        if (currentNode.getMovedPiece().getColour() == maximizingColour) {
+                            currentBestMove = currentNode;
+                        }
                     }
-                }
-                alpha = Math.max(alpha, nodeEvaluation);
-                if (beta <= alpha) {
-                    break;
+                    alpha = Math.max(alpha, nodeEvaluation);
+                    if (beta <= alpha) {
+                        break;
+                    }
                 }
             }
             return maxEvaluation;
         } else {
             double minEvaluation = Double.POSITIVE_INFINITY;
             for (Move currentNode : moves) {
-                Game.MakeMove(currentNode, currentPosition);
+                if (currentNode.getMovedPiece() != null){
+                    Game.MakeMove(currentNode, currentPosition);
 
-                System.out.println("Move Made");
-                game.getBoard().PrintBoard();
-                System.out.println("");
+//                System.out.println("Move Made");
+//                game.getBoard().PrintBoard();
+//                System.out.println("");
 
-                //game.getBoard().PrintBoard(); //todo remove
-                //if (currentNode.wasCapture()) System.out.println("Capture"); //todo remove
-                double nodeEvaluation = minimaxTraversal(currentPosition, searchDepth - 1, alpha, beta, true, maximizingColour);
-                //System.out.println("min Node evaluation: " + nodeEvaluation);
-                Game.reverseMove(currentNode, currentPosition, castlingAvailability, enPassantPawn);
+                    //game.getBoard().PrintBoard(); //todo remove
+                    //if (currentNode.wasCapture()) System.out.println("Capture"); //todo remove
+                    double nodeEvaluation = minimaxTraversal(currentPosition, searchDepth - 1, alpha, beta, true, maximizingColour);
+                    //System.out.println("min Node evaluation: " + nodeEvaluation);
+                    Game.reverseMove(currentNode, currentPosition, castlingAvailability, enPassantPawn);
 
-                System.out.println("Move Reversed");
-                game.getBoard().PrintBoard();
-                System.out.println("");
+//                System.out.println("Move Reversed");
+//                game.getBoard().PrintBoard();
+//                System.out.println("");
 
-                if (nodeEvaluation < minEvaluation) {
-                    minEvaluation = nodeEvaluation;
-                    if (currentNode.getMovedPiece().getColour() == maximizingColour) {
-                        currentBestMove = currentNode;
+                    if (nodeEvaluation < minEvaluation) {
+                        minEvaluation = nodeEvaluation;
+                        if (currentNode.getMovedPiece().getColour() == maximizingColour) {
+                            currentBestMove = currentNode;
+                        }
                     }
-                }
-                beta = Math.min(beta, nodeEvaluation);
-                if (beta <= alpha) {
-                    break;
+                    beta = Math.min(beta, nodeEvaluation);
+                    if (beta <= alpha) {
+                        break;
+                    }
                 }
             }
             return minEvaluation;
